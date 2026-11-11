@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import type { Route } from "./+types/dashboard";
 import { db } from "~/db";
 import {
@@ -17,6 +17,28 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { AlertTriangle, BookOpen, CheckCircle2, GraduationCap, PlayCircle } from "lucide-react";
 import { CourseImage } from "~/components/course-image";
 import { data, isRouteErrorResponse } from "react-router";
+import { PrototypeSwitcher, type VariantOption } from "~/components/prototype-switcher";
+import { VariantA } from "~/components/notification-prototype/variant-a";
+import { VariantB } from "~/components/notification-prototype/variant-b";
+import { VariantC } from "~/components/notification-prototype/variant-c";
+
+const NOTIFICATION_PROTOTYPE_VARIANTS: VariantOption[] = [
+  {
+    key: "A",
+    name: "Bell Popover Drawer",
+    description: "Header-integrated bell with unread badge and dropdown popover",
+  },
+  {
+    key: "B",
+    name: "Dedicated Activity Tab",
+    description: "Full dashboard tab with search, categories, and summary metrics",
+  },
+  {
+    key: "C",
+    name: "Floating Toast & Dock",
+    description: "Real-time action toasts with collapsible bottom activity dock",
+  },
+];
 
 function getUserEnrolledCourses(userId: number) {
   return db
@@ -270,26 +292,11 @@ export function HydrateFallback() {
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const { inProgressCourses, completedCourses } = loaderData;
   const totalCourses = inProgressCourses.length + completedCourses.length;
+  const [searchParams] = useSearchParams();
+  const variant = (searchParams.get("variant") ?? "A").toUpperCase();
 
-  return (
-    <div className="mx-auto max-w-7xl p-6 lg:p-8">
-      {/* Breadcrumb */}
-      <nav className="mb-6 text-sm text-muted-foreground">
-        <Link to="/" className="hover:text-foreground">
-          Home
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-foreground">Dashboard</span>
-      </nav>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">My Dashboard</h1>
-        <p className="mt-1 text-muted-foreground">
-          Track your learning progress
-        </p>
-      </div>
-
-      {totalCourses === 0 ? (
+  const mainDashboardContent =
+    totalCourses === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <GraduationCap className="mb-4 size-12 text-muted-foreground/50" />
           <h2 className="text-lg font-medium">No enrolled courses</h2>
@@ -424,7 +431,44 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             </section>
           )}
         </div>
+      );
+
+  return (
+    <div className="mx-auto max-w-7xl p-6 lg:p-8">
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-muted-foreground">
+        <Link to="/" className="hover:text-foreground">
+          Home
+        </Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">Dashboard</span>
+      </nav>
+
+      {/* Prototype Variant A Header Drawer */}
+      {variant === "A" && <VariantA />}
+
+      {/* Prototype Variant C Floating Alert & Dock */}
+      {variant === "C" && <VariantC />}
+
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">My Dashboard</h1>
+        <p className="mt-1 text-muted-foreground">
+          Track your learning progress
+        </p>
+      </div>
+
+      {/* Prototype Variant B Dedicated Tabs */}
+      {variant === "B" ? (
+        <VariantB>{mainDashboardContent}</VariantB>
+      ) : (
+        mainDashboardContent
       )}
+
+      {/* Floating Prototype Switcher */}
+      <PrototypeSwitcher
+        variants={NOTIFICATION_PROTOTYPE_VARIANTS}
+        current={variant}
+      />
     </div>
   );
 }
